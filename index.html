@@ -105,6 +105,33 @@
   }
 
   /* Calendrier */
+  .cal-title-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+  .cal-collapse-btn{
+    background:#0e1626;
+    border:1px solid var(--card-line);
+    color:var(--muted);
+    width:28px; height:28px;
+    border-radius:8px;
+    font-size:12px;
+    cursor:pointer;
+    transition:transform .2s ease;
+  }
+  .cal-collapse-btn.collapsed{ transform:rotate(-90deg); }
+  #calBody{
+    overflow:hidden;
+    transition:max-height .25s ease, opacity .2s ease;
+  }
+  #calBody.collapsed{
+    max-height:0 !important;
+    opacity:0;
+    margin:0;
+    pointer-events:none;
+  }
   .cal-head{
     display:flex;
     align-items:center;
@@ -277,6 +304,65 @@
   }
   .add-btn:hover{ background:var(--accent); }
   .add-btn:active{ transform:scale(0.96); }
+
+  .star-toggle{
+    background:#0e1626;
+    border:1px solid var(--card-line);
+    color:var(--muted);
+    border-radius:9px;
+    font-size:18px;
+    width:44px;
+    height:44px;
+    cursor:pointer;
+    transition:all .15s ease;
+    flex:none;
+  }
+  .star-toggle.active{
+    background:rgba(255,207,92,0.12);
+    border-color:var(--gold);
+    color:var(--gold);
+  }
+  .star-toggle:active{ transform:scale(0.94); }
+
+  .fav-list{ display:flex; flex-direction:column; gap:8px; }
+  .fav-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#0e1626;
+    border:1px solid var(--card-line);
+    border-radius:9px;
+    padding:9px 10px 9px 14px;
+  }
+  .fav-row .fr-name{ flex:1; font-size:13.5px; }
+  .fav-row .fr-meta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .fav-row button{
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    line-height:1;
+    padding:4px 5px;
+    border-radius:6px;
+    font-size:15px;
+  }
+  .fav-row .fr-star{ color:var(--muted); }
+  .fav-row .fr-star.active{ color:var(--gold); }
+  .fav-row .fr-add{ color:var(--accent); font-size:17px; }
+  .fav-row .fr-add:hover{ background:rgba(79,195,255,0.1); }
+  .fav-row .fr-del{ color:var(--muted); }
+  .fav-row .fr-del:hover{ color:var(--warn); background:rgba(255,138,92,0.1); }
+  .fav-empty{
+    font-size:12.5px;
+    color:var(--muted);
+    text-align:center;
+    padding:10px 0 2px;
+    font-style:italic;
+  }
 
   .divider{
     display:flex;
@@ -485,20 +571,25 @@
   <div class="layout">
     <div class="main">
       <div class="card">
-        <h2>Calendrier</h2>
-        <div class="sub">Tape sur un jour pour voir ou modifier son log.</div>
-        <div class="cal-head">
-          <div class="cal-nav">
-            <button id="calPrev" type="button">‹</button>
-            <button id="calNext" type="button">›</button>
-          </div>
-          <div class="cal-month" id="calMonthLabel"></div>
-          <button class="cal-today-btn" id="calToday" type="button">Aujourd'hui</button>
+        <div class="cal-title-row">
+          <h2 style="margin:0;">Calendrier</h2>
+          <button class="cal-collapse-btn" id="calCollapseBtn" type="button" title="Réduire le calendrier">▾</button>
         </div>
-        <div class="cal-grid" id="calGrid"></div>
-        <div class="cal-legend">
-          <span><i class="dot ok"></i> objectif atteint</span>
-          <span><i class="dot warn"></i> loggé, pas atteint</span>
+        <div class="sub">Tape sur un jour pour voir ou modifier son log.</div>
+        <div id="calBody">
+          <div class="cal-head">
+            <div class="cal-nav">
+              <button id="calPrev" type="button">‹</button>
+              <button id="calNext" type="button">›</button>
+            </div>
+            <div class="cal-month" id="calMonthLabel"></div>
+            <button class="cal-today-btn" id="calToday" type="button">Aujourd'hui</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-legend">
+            <span><i class="dot ok"></i> objectif atteint</span>
+            <span><i class="dot warn"></i> loggé, pas atteint</span>
+          </div>
         </div>
         <div class="selected-day-label" id="selectedDayLabel">Aujourd'hui</div>
       </div>
@@ -540,6 +631,7 @@
               <span class="unit" id="mealWeightUnit">g</span>
             </div>
           </div>
+          <button class="star-toggle" id="presetStar" type="button" title="Sauvegarder comme repas favori (actif chaque jour)">☆</button>
           <button class="add-btn" id="addPreset" type="button">+ Ajouter</button>
         </div>
 
@@ -566,10 +658,17 @@
               <span class="unit">/100g</span>
             </div>
           </div>
+          <button class="star-toggle" id="customStar" type="button" title="Sauvegarder comme repas favori (actif chaque jour)">☆</button>
           <button class="add-btn" id="addCustom" type="button">+ Ajouter</button>
         </div>
 
         <div class="meal-list" id="mealList"></div>
+      </div>
+
+      <div class="card">
+        <h2>Mes repas favoris</h2>
+        <div class="sub">Tape ☆ en ajoutant un aliment pour le sauvegarder ici — il sera ajouté automatiquement chaque nouveau jour.</div>
+        <div class="fav-list" id="favList"></div>
       </div>
 
       <div class="card">
@@ -678,6 +777,18 @@
   }
   function hasLog(dateStr){
     return localStorage.getItem(LOG_PREFIX + dateStr) !== null;
+  }
+
+  const FAVORITES_KEY = 'proteinFavorites';
+  function loadFavorites(){
+    try{
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return [];
+  }
+  function saveFavorites(favs){
+    try{ localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs)); }catch(e){}
   }
 
   function fmtDate(d){
@@ -805,14 +916,20 @@
     if(!opt || qty <= 0) return;
     const proteinRef = parseFloat(opt.value);
     const isUnit = opt.dataset.type === 'unit';
-    mealItems.push({
+    const item = {
       name: opt.dataset.name,
       type: isUnit ? 'unit' : 'weight',
       unitLabel: opt.dataset.unitLabel || null,
       qty,
       proteinRef,
       grams: isUnit ? qty * proteinRef : (qty / 100) * proteinRef
-    });
+    };
+    if(presetStar.classList.contains('active')){
+      item.favId = addFavorite(item);
+      presetStar.classList.remove('active');
+      presetStar.textContent = '☆';
+    }
+    mealItems.push(item);
     renderMealList();
     calc();
   });
@@ -823,19 +940,125 @@
     const weight = parseFloat(document.getElementById('customWeight').value) || 0;
     const proteinPer100 = parseFloat(document.getElementById('customProt').value) || 0;
     if(!name || weight <= 0) return;
-    mealItems.push({
+    const item = {
       name,
       type: 'weight',
       qty: weight,
       proteinRef: proteinPer100,
       grams: (weight / 100) * proteinPer100
-    });
+    };
+    if(customStar.classList.contains('active')){
+      item.favId = addFavorite(item);
+      customStar.classList.remove('active');
+      customStar.textContent = '☆';
+    }
+    mealItems.push(item);
     nameEl.value = '';
     renderMealList();
     calc();
   });
 
+  /* ================= Favoris (repas récurrents) ================= */
+  const presetStar = document.getElementById('presetStar');
+  const customStar = document.getElementById('customStar');
+  [presetStar, customStar].forEach(btn => {
+    btn.addEventListener('click', () => {
+      const active = btn.classList.toggle('active');
+      btn.textContent = active ? '★' : '☆';
+    });
+  });
+
+  function addFavorite(item){
+    const favs = loadFavorites();
+    const id = 'fav_' + Date.now() + Math.random().toString(36).slice(2, 7);
+    favs.push({
+      id,
+      name: item.name,
+      type: item.type,
+      unitLabel: item.unitLabel || null,
+      qty: item.qty,
+      proteinRef: item.proteinRef,
+      autoDaily: true
+    });
+    saveFavorites(favs);
+    renderFavorites();
+    return id;
+  }
+
+  function favMeta(fav){
+    return fav.type === 'unit'
+      ? `${fav.qty} ${fav.unitLabel}${fav.qty > 1 ? 's' : ''} · ${fav.proteinRef}g/${fav.unitLabel}`
+      : `${fav.qty}g · ${fav.proteinRef}g/100g`;
+  }
+
+  function favToItem(fav){
+    return {
+      name: fav.name,
+      type: fav.type,
+      unitLabel: fav.unitLabel || null,
+      qty: fav.qty,
+      proteinRef: fav.proteinRef,
+      grams: fav.type === 'unit' ? fav.qty * fav.proteinRef : (fav.qty / 100) * fav.proteinRef,
+      favId: fav.id
+    };
+  }
+
+  function renderFavorites(){
+    const list = document.getElementById('favList');
+    const favs = loadFavorites();
+    if(favs.length === 0){
+      list.innerHTML = '<div class="fav-empty">Aucun repas favori pour l\'instant</div>';
+      return;
+    }
+    list.innerHTML = favs.map(fav => `
+      <div class="fav-row" data-id="${fav.id}">
+        <span class="fr-name">${fav.name}</span>
+        <span class="fr-meta">${favMeta(fav)}</span>
+        <button class="fr-star ${fav.autoDaily ? 'active' : ''}" data-action="toggle" title="Actif chaque jour">${fav.autoDaily ? '★' : '☆'}</button>
+        <button class="fr-add" data-action="add" title="Ajouter à aujourd'hui">+</button>
+        <button class="fr-del" data-action="del" title="Supprimer">✕</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('.fav-row').forEach(row => {
+      const id = row.dataset.id;
+      row.querySelector('[data-action="toggle"]').addEventListener('click', () => {
+        const favs = loadFavorites();
+        const fav = favs.find(f => f.id === id);
+        if(fav){ fav.autoDaily = !fav.autoDaily; saveFavorites(favs); renderFavorites(); }
+      });
+      row.querySelector('[data-action="add"]').addEventListener('click', () => {
+        const fav = loadFavorites().find(f => f.id === id);
+        if(fav){ mealItems.push(favToItem(fav)); renderMealList(); calc(); }
+      });
+      row.querySelector('[data-action="del"]').addEventListener('click', () => {
+        const favs = loadFavorites().filter(f => f.id !== id);
+        saveFavorites(favs);
+        renderFavorites();
+      });
+    });
+  }
+
+  // Ajoute automatiquement les favoris "actifs chaque jour" à un jour vierge (pas encore log)
+  function applyAutoFavorites(){
+    const favs = loadFavorites().filter(f => f.autoDaily);
+    favs.forEach(fav => {
+      if(!mealItems.some(i => i.favId === fav.id)){
+        mealItems.push(favToItem(fav));
+      }
+    });
+  }
+
   /* ================= Stickman ================= */
+  function capsule(x1, y1, x2, y2, w, ink){
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx*dx + dy*dy) || 0.01;
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    return `<rect x="${x1.toFixed(2)}" y="${(y1 - w/2).toFixed(2)}" width="${len.toFixed(2)}" height="${w.toFixed(2)}" rx="${(w/2).toFixed(2)}" ry="${(w/2).toFixed(2)}" transform="rotate(${angle.toFixed(2)} ${x1.toFixed(2)} ${y1.toFixed(2)})" fill="${ink}"/>`;
+  }
+  function joint(x, y, r, ink){
+    return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}" fill="${ink}"/>`;
+  }
+
   function buildStickman(pct){
     const capped = Math.max(0, Math.min(pct, 100));
     const flex = pct >= 100;
@@ -843,51 +1066,70 @@
     const ink = '#050608';
 
     const headR = 14 + t * 5;
-    const torsoStroke = 6 + t * 11;
-    const armStroke = 5 + t * 8;
-    const legStroke = 5.5 + t * 9;
-    const shoulderSpread = 2 + t * 6;
+    const shoulderHalf = 15 + t * 15;
+    const hipHalf = 10 + t * 5;
+    const armW = 6 + t * 7;
+    const legW = 7 + t * 7;
 
     const headY = 4;
-    const neckY = headY + headR;
+    const neckY = headY + headR * 0.85;
     const shoulderY = neckY;
-    const hipY = 122;
-    const leftShoulder = 80 - shoulderSpread, rightShoulder = 80 + shoulderSpread;
+    const hipY = 118;
+
+    const leftShoulder = 80 - shoulderHalf, rightShoulder = 80 + shoulderHalf;
+    const leftHip = 80 - hipHalf, rightHip = 80 + hipHalf;
+
+    const torso = `<path d="M ${leftShoulder.toFixed(2)} ${shoulderY.toFixed(2)} L ${rightShoulder.toFixed(2)} ${shoulderY.toFixed(2)} L ${rightHip.toFixed(2)} ${hipY.toFixed(2)} L ${leftHip.toFixed(2)} ${hipY.toFixed(2)} Z" fill="${ink}"/>`;
 
     let armsSVG, extra = '';
     if(!flex){
-      const spread = 16 + t * 18;
-      const handY = 96;
-      const lx = leftShoulder - spread, rx = rightShoulder + spread;
+      const armReach = 20 - t * 4;
+      const handY = shoulderY + (80 - t * 6);
+      const lHandX = leftShoulder - armReach, rHandX = rightShoulder + armReach;
       armsSVG = `
-        <line x1="${leftShoulder}" y1="${shoulderY}" x2="${lx}" y2="${handY}" stroke="${ink}" stroke-width="${armStroke.toFixed(1)}" stroke-linecap="round"/>
-        <line x1="${rightShoulder}" y1="${shoulderY}" x2="${rx}" y2="${handY}" stroke="${ink}" stroke-width="${armStroke.toFixed(1)}" stroke-linecap="round"/>
+        ${joint(leftShoulder, shoulderY, armW/2, ink)}
+        ${capsule(leftShoulder, shoulderY, lHandX, handY, armW, ink)}
+        ${joint(rightShoulder, shoulderY, armW/2, ink)}
+        ${capsule(rightShoulder, shoulderY, rHandX, handY, armW, ink)}
       `;
     } else {
-      const elbowY = shoulderY + 28;
-      const lElbow = leftShoulder - 24, rElbow = rightShoulder + 24;
-      const fistY = shoulderY - 10;
-      const lFist = leftShoulder - 2, rFist = rightShoulder + 2;
+      const lElbow = { x: leftShoulder - 26, y: shoulderY + 32 };
+      const rElbow = { x: rightShoulder + 26, y: shoulderY + 32 };
+      const lFist = { x: leftShoulder - 4, y: shoulderY - 14 };
+      const rFist = { x: rightShoulder + 4, y: shoulderY - 14 };
+      const upperW = armW + 4, foreW = armW + 1;
+      const lBicep = { x: leftShoulder + 0.45*(lElbow.x-leftShoulder) - 7, y: shoulderY + 0.45*(lElbow.y-shoulderY) - 2 };
+      const rBicep = { x: rightShoulder + 0.45*(rElbow.x-rightShoulder) + 7, y: shoulderY + 0.45*(rElbow.y-shoulderY) - 2 };
       armsSVG = `
-        <line x1="${leftShoulder}" y1="${shoulderY}" x2="${lElbow}" y2="${elbowY}" stroke="${ink}" stroke-width="${(armStroke+2).toFixed(1)}" stroke-linecap="round"/>
-        <line x1="${lElbow}" y1="${elbowY}" x2="${lFist}" y2="${fistY}" stroke="${ink}" stroke-width="${(armStroke+1).toFixed(1)}" stroke-linecap="round"/>
-        <line x1="${rightShoulder}" y1="${shoulderY}" x2="${rElbow}" y2="${elbowY}" stroke="${ink}" stroke-width="${(armStroke+2).toFixed(1)}" stroke-linecap="round"/>
-        <line x1="${rElbow}" y1="${elbowY}" x2="${rFist}" y2="${fistY}" stroke="${ink}" stroke-width="${(armStroke+1).toFixed(1)}" stroke-linecap="round"/>
+        ${joint(leftShoulder, shoulderY, upperW/2, ink)}
+        ${capsule(leftShoulder, shoulderY, lElbow.x, lElbow.y, upperW, ink)}
+        ${joint(lElbow.x, lElbow.y, foreW/2, ink)}
+        ${capsule(lElbow.x, lElbow.y, lFist.x, lFist.y, foreW, ink)}
+        ${joint(lBicep.x, lBicep.y, upperW*0.62, ink)}
+        ${joint(rightShoulder, shoulderY, upperW/2, ink)}
+        ${capsule(rightShoulder, shoulderY, rElbow.x, rElbow.y, upperW, ink)}
+        ${joint(rElbow.x, rElbow.y, foreW/2, ink)}
+        ${capsule(rElbow.x, rElbow.y, rFist.x, rFist.y, foreW, ink)}
+        ${joint(rBicep.x, rBicep.y, upperW*0.62, ink)}
       `;
       extra = `
         <text x="80" y="-14" text-anchor="middle" font-size="18">🏆</text>
-        <text x="10" y="56" font-size="15" class="spark">✦</text>
-        <text x="146" y="44" font-size="12" class="spark2">✦</text>
-        <text x="16" y="150" font-size="11" class="spark2">✦</text>
-        <text x="142" y="160" font-size="14" class="spark">✦</text>
+        <text x="8" y="52" font-size="15" class="spark">✦</text>
+        <text x="148" y="42" font-size="12" class="spark2">✦</text>
+        <text x="14" y="148" font-size="11" class="spark2">✦</text>
+        <text x="144" y="158" font-size="14" class="spark">✦</text>
       `;
     }
 
-    const legSpread = 9 + t * 6;
-    const lFootX = 80 - legSpread - t * 5, rFootX = 80 + legSpread + t * 5;
+    const legReach = 8 + t * 5;
+    const leftLegX = 80 - hipHalf * 0.55, rightLegX = 80 + hipHalf * 0.55;
+    const footY = 196;
+    const lFootX = leftLegX - legReach, rFootX = rightLegX + legReach;
     const legsSVG = `
-      <line x1="80" y1="${hipY}" x2="${lFootX}" y2="196" stroke="${ink}" stroke-width="${legStroke.toFixed(1)}" stroke-linecap="round"/>
-      <line x1="80" y1="${hipY}" x2="${rFootX}" y2="196" stroke="${ink}" stroke-width="${legStroke.toFixed(1)}" stroke-linecap="round"/>
+      ${joint(leftLegX, hipY, legW/2, ink)}
+      ${capsule(leftLegX, hipY, lFootX, footY, legW, ink)}
+      ${joint(rightLegX, hipY, legW/2, ink)}
+      ${capsule(rightLegX, hipY, rFootX, footY, legW, ink)}
     `;
 
     const glow = flex
@@ -895,12 +1137,12 @@
       : 'drop-shadow(0 0 5px rgba(79,195,255,0.5)) drop-shadow(0 0 12px rgba(79,195,255,0.25))';
 
     return `
-    <svg viewBox="0 -20 160 210" width="140" height="184" xmlns="http://www.w3.org/2000/svg" style="overflow:visible; filter:${glow};">
+    <svg viewBox="0 -20 160 216" width="140" height="188" xmlns="http://www.w3.org/2000/svg" style="overflow:visible; filter:${glow};">
       ${extra}
       ${legsSVG}
-      <line x1="80" y1="${neckY}" x2="80" y2="${hipY}" stroke="${ink}" stroke-width="${torsoStroke.toFixed(1)}" stroke-linecap="round"/>
+      ${torso}
       ${armsSVG}
-      <circle cx="80" cy="${headY}" r="${headR.toFixed(1)}" fill="${ink}"/>
+      <circle cx="80" cy="${headY}" r="${headR.toFixed(2)}" fill="${ink}"/>
     </svg>`;
   }
 
@@ -1053,10 +1295,12 @@
 
   function selectDate(dateStr){
     selectedDate = dateStr;
+    const isNewDay = !hasLog(dateStr);
     const log = loadLog(dateStr);
     mealItems = log.mealItems || [];
     els.laitVol.value = log.laitVol || 0;
     els.poudreG.value = log.poudreG || 0;
+    if(isNewDay) applyAutoFavorites();
     document.getElementById('selectedDayLabel').textContent = formatSelectedLabel(dateStr);
     renderMealList();
     calc();
@@ -1079,6 +1323,23 @@
     selectDate(todayStr());
   });
 
+  /* ================= Calendrier repliable ================= */
+  const CAL_COLLAPSED_KEY = 'calCollapsed';
+  const calBody = document.getElementById('calBody');
+  const calCollapseBtn = document.getElementById('calCollapseBtn');
+  function applyCalCollapsed(collapsed){
+    calBody.classList.toggle('collapsed', collapsed);
+    calCollapseBtn.classList.toggle('collapsed', collapsed);
+    calCollapseBtn.title = collapsed ? 'Afficher le calendrier' : 'Réduire le calendrier';
+  }
+  let calCollapsed = localStorage.getItem(CAL_COLLAPSED_KEY) === '1';
+  applyCalCollapsed(calCollapsed);
+  calCollapseBtn.addEventListener('click', () => {
+    calCollapsed = !calCollapsed;
+    applyCalCollapsed(calCollapsed);
+    try{ localStorage.setItem(CAL_COLLAPSED_KEY, calCollapsed ? '1' : '0'); }catch(e){}
+  });
+
   /* ================= Initialisation ================= */
   const profile = loadProfile();
   els.poids.value = profile.poids;
@@ -1090,6 +1351,7 @@
   dayIds.forEach(id => els[id].addEventListener('input', calc));
 
   document.getElementById('selectedDayLabel').textContent = formatSelectedLabel(selectedDate);
+  renderFavorites();
   selectDate(selectedDate);
 
   /* ================= PWA: service worker ================= */
